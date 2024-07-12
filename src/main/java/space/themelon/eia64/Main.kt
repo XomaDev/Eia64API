@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
 
 object Main {
+
     @JvmStatic
     fun main(args: Array<String>) {
         val server = HttpServer.create(InetSocketAddress(7070), 0)
