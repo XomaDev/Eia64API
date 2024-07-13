@@ -18,9 +18,12 @@ object EchoEia {
     }
 
     private fun initSession(input: InputStream, output: OutputStream) {
+        output.write(EiaText.INTRO.encodeToByteArray())
+
         val executor = Executor()
         val codeOutput = ByteArrayOutputStream()
         executor.STANDARD_OUTPUT = PrintStream(codeOutput)
+
         output.write("eia $ ".toByteArray())
 
         val lineBytes = ByteArrayOutputStream()
