@@ -3,7 +3,6 @@ package space.themelon.eia64
 import space.themelon.eia64.runtime.Executor
 import java.io.*
 import java.net.ServerSocket
-import java.net.Socket
 import java.util.*
 import kotlin.concurrent.thread
 
@@ -14,20 +13,8 @@ object BufferEchoEia {
         while (true) {
             val client = server.accept()
             thread {
-                serveClient(client)
+                Safety.safeServe(client) { input, output -> initSession(input, output) }
             }
-        }
-    }
-
-    private fun serveClient(client: Socket) {
-        val output = client.getOutputStream()
-        try {
-            initSession(client.getInputStream(), output)
-        } catch (io: Exception) {
-            Safety.safeClose(client)
-            try {
-                output.write("\nCaught Error ${io.message}".encodeToByteArray())
-            } catch (ignored: IOException) {}
         }
     }
 
