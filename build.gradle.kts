@@ -24,17 +24,8 @@ tasks.test {
 }
 
 kotlin {
-    jvmToolchain(22)
+    jvmToolchain(17)
 }
-
-tasks.jar {
-    manifest {
-        manifest {
-            attributes("Main-Class" to "space.themelon.eia64.Initiator")
-        }
-    }
-}
-
 
 tasks.register<Jar>("fatJar") {
     archiveClassifier.set("all")
