@@ -13,10 +13,8 @@ import java.io.PrintStream
 import kotlin.concurrent.thread
 
 object Bot {
-    @JvmStatic
-    fun main(args: Array<String>) {
+    fun main() {
         val userDirectory = System.getProperty("user.dir")
-        Executor.STD_LIB = File(userDirectory, "eialib/stdlib/").absolutePath
         // read the telegram bot api key from KEY file
         val apiToken = File(userDirectory, "KEY").readText()
         val bot = bot {
