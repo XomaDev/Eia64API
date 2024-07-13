@@ -16,5 +16,8 @@ object Initiator {
         thread {
             BufferEchoEia.main()
         }
+        thread {
+            FileEia.main()
+        }
     }
 }

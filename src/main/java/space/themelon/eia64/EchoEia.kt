@@ -1,12 +1,7 @@
 package space.themelon.eia64
 
-import space.themelon.eia64.EiaText.BLUE
-import space.themelon.eia64.EiaText.BLUE_BG
 import space.themelon.eia64.EiaText.BOLD
-import space.themelon.eia64.EiaText.CYAN_BG
-import space.themelon.eia64.EiaText.GREEN
 import space.themelon.eia64.EiaText.RED
-import space.themelon.eia64.EiaText.RED_BG
 import space.themelon.eia64.EiaText.RESET
 import space.themelon.eia64.EiaText.SHELL_STYLE
 import space.themelon.eia64.runtime.Executor
@@ -43,12 +38,11 @@ object EchoEia {
             if (b.toChar() == '\n') {
                 val code = String(lineBytes.toByteArray())
                 lineBytes.reset()
-                println(code)
-                executor.loadMainSource(code)
 
                 output.write("$RED$BOLD".encodeToByteArray())
-                output.write(RESET.encodeToByteArray())
+                executor.loadMainSource(code)
 
+                output.write(RESET.encodeToByteArray())
                 output.write(SHELL_STYLE)
             } else {
                 lineBytes.write(b)

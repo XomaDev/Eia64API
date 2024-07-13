@@ -12,13 +12,17 @@ class AutoCloseSocket(
     socket: Socket
 ) {
 
+    companion object {
+        // 5 minutes
+        const val TIMEOUT = 5 * 50 * 1000
+    }
+
     private val scope = CoroutineScope(Dispatchers.Default)
     private val channel = Channel<Socket>()
 
     init {
         scope.launch {
-            // 5 mins = 5 * 60 * 1000
-            delay(5 * 60 * 1000)
+            delay(TIMEOUT.toLong())
             channel.send(socket)
         }
 

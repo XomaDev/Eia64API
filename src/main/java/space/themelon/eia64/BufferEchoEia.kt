@@ -1,8 +1,5 @@
 package space.themelon.eia64
 
-import space.themelon.eia64.EiaText.BLUE_BG
-import space.themelon.eia64.EiaText.CYAN_BG
-import space.themelon.eia64.EiaText.RESET
 import space.themelon.eia64.EiaText.SHELL_STYLE
 import space.themelon.eia64.runtime.Executor
 import java.io.*
@@ -25,7 +22,8 @@ object BufferEchoEia {
 
     private fun initSession(input: InputStream, output: OutputStream) {
         output.write(EiaText.INTRO.encodeToByteArray())
-        output.write("      ⭐\uFE0F Running in buffer mode, please type ~~ to run code\n\n".encodeToByteArray())
+        output.write(("\t⭐\uFE0F Running in buffer mode, type ~~ to run code." +
+                "\n\t✏\uFE0F For line-by-line execution use port 2244\n\n").encodeToByteArray())
         val executor = Executor()
         executor.standardOutput = PrintStream(output)
         executor.standardInput = input
