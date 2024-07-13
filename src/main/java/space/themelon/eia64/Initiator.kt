@@ -11,9 +11,6 @@ object Initiator {
         Executor.STD_LIB = File(userDirectory, "eialib/stdlib/").absolutePath
 
         thread {
-            Bot.main()
-        }
-        thread {
             EchoEia.main()
         }
         thread {
