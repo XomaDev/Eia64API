@@ -12,6 +12,7 @@ object EchoEia {
         while (true) {
             val client = server.accept()
             thread {
+                AutoCloseSocket(client)
                 Safety.safeServe(client) { input, output -> initSession(input, output) }
             }
         }

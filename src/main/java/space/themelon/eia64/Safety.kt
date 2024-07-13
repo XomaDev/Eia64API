@@ -7,6 +7,12 @@ import java.net.Socket
 
 object Safety {
 
+    fun safeClose(client: Socket) {
+        try {
+            client.close()
+        } catch (ignored: IOException) { }
+    }
+
     fun safeServe(client: Socket, block: (InputStream, OutputStream) -> Unit) {
         val output = client.getOutputStream()
         try {
@@ -15,9 +21,7 @@ object Safety {
             try {
                 output.write("\nCaught Error ${io.message}".encodeToByteArray())
             } catch (ignored: IOException) { }
-            try {
-                client.close()
-            } catch (ignored: IOException) { }
+            safeClose(client)
         }
     }
 }
