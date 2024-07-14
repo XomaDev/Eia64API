@@ -1,5 +1,6 @@
 package space.themelon.eia64
 
+import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -7,9 +8,9 @@ import java.net.Socket
 
 object Safety {
 
-    fun safeClose(client: Socket) {
+    fun safeClose(closable: Closeable) {
         try {
-            client.close()
+            closable.close()
         } catch (ignored: IOException) { }
     }
 

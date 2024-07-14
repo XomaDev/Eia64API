@@ -3,7 +3,6 @@ import org.apache.sshd.server.ExitCallback
 import org.apache.sshd.server.SshServer
 import org.apache.sshd.server.auth.UserAuthNoneFactory
 import org.apache.sshd.server.command.Command
-import org.apache.sshd.server.command.CommandFactory
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider
 import org.apache.sshd.server.shell.ShellFactory
 import java.io.*
@@ -14,14 +13,9 @@ fun main() {
     val sshd = SshServer.setUpDefaultServer()
     sshd.port = 1212  // Change the port number here
     sshd.keyPairProvider = SimpleGeneratorHostKeyProvider(Paths.get("hostkey.ser"))
-    sshd.fileSystemFactory = VirtualFileSystemFactory(Paths.get("."))
 
-    // Use no authentication
     sshd.userAuthFactories = listOf(UserAuthNoneFactory.INSTANCE)
 
-    sshd.commandFactory = CommandFactory { command, a -> EchoCommand(a) }
-
-    // Set a custom shell factory
     sshd.shellFactory = ShellFactory { CustomShell() }
 
     try {
@@ -39,37 +33,6 @@ fun main() {
     }
 }
 
-class EchoCommand(private val command: String) : Command {
-    private lateinit var out: OutputStream
-    private lateinit var err: OutputStream
-    private lateinit var inStream: InputStream
-
-    override fun setInputStream(`in`: InputStream) {
-        this.inStream = `in`
-    }
-
-    override fun setOutputStream(out: OutputStream) {
-        this.out = out
-    }
-
-    override fun setErrorStream(err: OutputStream) {
-        this.err = err
-    }
-
-    override fun setExitCallback(callback: ExitCallback?) {
-        // Not implemented
-    }
-
-    @Throws(IOException::class)
-    override fun start(channel: org.apache.sshd.server.channel.ChannelSession?, env: org.apache.sshd.server.Environment?) {
-        out.write(("Echo: $command\n").toByteArray())
-        out.flush()
-    }
-
-    override fun destroy(channel: org.apache.sshd.server.channel.ChannelSession?) {
-        // Not implemented
-    }
-}
 
 class CustomShell : Command {
     private lateinit var inStream: InputStream
@@ -109,29 +72,29 @@ class CustomShell : Command {
                         break
                     }
 
-//                    if (ch.toChar() == '\r') {
-//                        println("yeahh")
-//                        out.write(10)
-//                    }
-//                    out.write(ch)
-//                    out.flush()
-                    if (ch.toChar() == '\r' || ch.toChar() == '\n') {
-                        println('\r'.code)
-                        if (inputLine.isNotEmpty()) {
-                            val input = inputLine.toString().trim()
-                            out.write("You typed: $input\n\r".toByteArray())
-                            out.flush()
-                            if (input.equals("exit", ignoreCase = true)) {
-                                out.write("Goodbye!\n\r".toByteArray())
-                                out.flush()
-                                callback?.onExit(0)
-                                break
-                            }
-                            inputLine.setLength(0)
-                        }
-                    } else {
-                        inputLine.append(ch.toChar())
+                    if (ch.toChar() == '\r') {
+                        println("yeahh")
+                        out.write(10)
                     }
+                    out.write(ch)
+                    out.flush()
+//                    if (ch.toChar() == '\r' || ch.toChar() == '\n') {
+//                        println('\r'.code)
+//                        if (inputLine.isNotEmpty()) {
+//                            val input = inputLine.toString().trim()
+//                            out.write("You typed: $input\n\r".toByteArray())
+//                            out.flush()
+//                            if (input.equals("exit", ignoreCase = true)) {
+//                                out.write("Goodbye!\n\r".toByteArray())
+//                                out.flush()
+//                                callback?.onExit(0)
+//                                break
+//                            }
+//                            inputLine.setLength(0)
+//                        }
+//                    } else {
+//                        inputLine.append(ch.toChar())
+//                    }
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
