@@ -1,4 +1,4 @@
-package space.themelon.eia64
+package space.themelon.eia64.io
 
 import java.io.OutputStream
 

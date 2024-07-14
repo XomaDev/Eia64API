@@ -11,10 +11,10 @@ object Initiator {
         Executor.STD_LIB = File(userDirectory, "eialib/stdlib/").absolutePath
 
         thread {
-            EchoEia.main()
+            EiaShell.main()
         }
         thread {
-            BufferEchoEia.main()
+            EiaPlayground.main()
         }
         thread {
             FileEia.main()

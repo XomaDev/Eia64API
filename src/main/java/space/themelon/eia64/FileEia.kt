@@ -1,5 +1,7 @@
 package space.themelon.eia64
 
+import space.themelon.eia64.io.AutoCloseSocket
+import space.themelon.eia64.io.Safety
 import space.themelon.eia64.runtime.Executor
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
@@ -9,7 +11,6 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.net.ServerSocket
 import java.net.Socket
-import java.util.*
 import kotlin.concurrent.thread
 
 object FileEia {

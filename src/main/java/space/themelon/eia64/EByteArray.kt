@@ -21,6 +21,8 @@ class EByteArray {
         if (index != 0) index--
     }
 
+    fun isNotEmpty() = index != 0
+
     private fun resize() {
         val newCap = size * 2
         val allocation = ByteArray(newCap)
@@ -29,5 +31,9 @@ class EByteArray {
         }
         size = newCap
         array = allocation
+    }
+
+    fun reset() {
+        index = 0
     }
 }

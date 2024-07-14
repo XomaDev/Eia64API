@@ -5,34 +5,41 @@ import org.apache.sshd.server.SshServer
 import org.apache.sshd.server.auth.UserAuthNoneFactory
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider
 import org.apache.sshd.server.shell.ShellFactory
+import space.themelon.eia64.EiaText.BLUE
 import space.themelon.eia64.EiaText.BOLD
 import space.themelon.eia64.EiaText.RED
 import space.themelon.eia64.EiaText.RESET
 import space.themelon.eia64.EiaText.SHELL_STYLE
+import space.themelon.eia64.io.TerminalInput
+import space.themelon.eia64.io.TerminalOutput
 import space.themelon.eia64.runtime.Executor
-import java.io.*
+import java.io.InputStream
+import java.io.OutputStream
+import java.io.PrintStream
 import java.nio.file.Paths
+import java.util.*
 
-object EiaShell {
+object EiaPlayground {
 
     fun main() {
         SshServer.setUpDefaultServer().apply {
-            port = 2244
-            keyPairProvider = SimpleGeneratorHostKeyProvider(Paths.get("eiashell.ser"))
+            port = 2103
+            keyPairProvider = SimpleGeneratorHostKeyProvider(Paths.get("eiaplayground.ser"))
             userAuthFactories = listOf(UserAuthNoneFactory.INSTANCE)
             shellFactory = ShellFactory { EiaCommand(initSession) }
             start()
         }
     }
 
-    private val initSession: (InputStream, OutputStream, ExitCallback?) -> Unit = { input, output, exitCallback ->
+    private val initSession: (TerminalInput, TerminalOutput, ExitCallback?) -> Unit = { input, output, exitCallback ->
         output.write(EiaText.INTRO.encodeToByteArray())
+        output.write("\t⭐\uFE0FUse Control-E to run the code\r\n\r\n".encodeToByteArray())
+        output.write(SHELL_STYLE)
+        output.write("\r\n".encodeToByteArray())
 
         val executor = Executor()
         executor.standardOutput = PrintStream(output)
-        executor.standardInput = input
-
-        output.write(SHELL_STYLE)
+        executor.standardInput = input.input
 
         val array = EByteArray()
         while (true) {
@@ -58,7 +65,9 @@ object EiaShell {
             }
             output.write(b)
 
-            if (b.toChar() == '\n') {
+            if (b.toChar() == '\u0005') {
+                // Control E character
+
                 val code = String(array.get())
                     // this removes any control characters present
                     .replace(Regex("\\p{Cntrl}"), "")
@@ -66,11 +75,35 @@ object EiaShell {
                 output.write("$RED$BOLD".encodeToByteArray())
                 executor.loadMainSource(code)
 
-                output.write(RESET.encodeToByteArray())
                 output.write(SHELL_STYLE)
+                output.write("\r\n".encodeToByteArray())
+
             } else {
                 array.put(b.toByte())
             }
+        }
+    }
+
+    private fun initSession(input: InputStream, output: OutputStream) {
+        output.write(EiaText.INTRO.encodeToByteArray())
+        output.write(("\t⭐\uFE0F Running in buffer mode, type ~~ to run code." +
+                "\n\t✏\uFE0F For line-by-line execution use port 2244\n\n").encodeToByteArray())
+        val executor = Executor()
+        executor.standardOutput = PrintStream(output)
+        executor.standardInput = input
+
+        val scanner = Scanner(input)
+        var buffer = StringJoiner("\n")
+        output.write(SHELL_STYLE)
+        while (true) {
+            val line = scanner.nextLine()
+            if (line == "exit") break
+            else if (line == "~~") {
+                println(buffer)
+                executor.loadMainSource(buffer.toString())
+                buffer = StringJoiner("\n")
+                output.write(SHELL_STYLE)
+            } else buffer.add(line)
         }
     }
 }

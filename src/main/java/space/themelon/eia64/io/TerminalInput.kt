@@ -1,8 +1,8 @@
-package space.themelon.eia64
+package space.themelon.eia64.io
 
 import java.io.InputStream
 
-class TerminalInput(private val input: InputStream): InputStream() {
+class TerminalInput(val input: InputStream): InputStream() {
     override fun read(): Int {
         val read = input.read()
         if (read.toChar() == '\r') {
