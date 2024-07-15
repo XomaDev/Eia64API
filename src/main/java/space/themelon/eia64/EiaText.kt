@@ -25,9 +25,9 @@ object EiaText {
 
     var INTRO =
         "\t\t${BOLD}❄\uFE0FWelcome to Eia!$RESET\n\n" +
-                "\t${YELLOW}${BOLD}Git ${CYAN}${BOLD}${UNDERLINE}github.com/XomaDev/Eia64$RESET\n" +
+                "\t${YELLOW}${BOLD}Git ${CYAN}${BOLD} ${UNDERLINE}github.com/XomaDev/Eia64$RESET\n" +
                 "\t${RED}${BOLD}Docs ${CYAN}${UNDERLINE}themelon.space/eia$RESET\n\n" +
-                "\t${PURPLE}${BOLD}Created with love \uD83D\uDE1A by Kumaraswamy B G$RESET\n" +
+                "\t${PURPLE}${BOLD}Created with love ♥\uFE0F by Kumaraswamy B G$RESET\n" +
                 BLUE + BOLD +
                 """
               ___                   ___

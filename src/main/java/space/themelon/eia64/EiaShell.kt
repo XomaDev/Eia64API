@@ -9,6 +9,9 @@ import space.themelon.eia64.EiaText.BOLD
 import space.themelon.eia64.EiaText.RED
 import space.themelon.eia64.EiaText.RESET
 import space.themelon.eia64.EiaText.SHELL_STYLE
+import space.themelon.eia64.io.AutoCloseExecutor
+import space.themelon.eia64.io.TerminalInput
+import space.themelon.eia64.io.TerminalOutput
 import space.themelon.eia64.runtime.Executor
 import java.io.*
 import java.nio.file.Paths
@@ -25,14 +28,22 @@ object EiaShell {
         }
     }
 
-    private val initSession: (InputStream, OutputStream, ExitCallback?) -> Unit = { input, output, exitCallback ->
+    private val initSession: (TerminalInput, TerminalOutput, ExitCallback?) -> Unit = { input, output, exitCallback ->
         output.write(EiaText.INTRO.encodeToByteArray())
 
         val executor = Executor()
         executor.standardOutput = PrintStream(output)
         executor.standardInput = input
 
+        AutoCloseExecutor(executor) {
+            output.write("Max session duration of 5 mins reached\n".encodeToByteArray())
+            output.close()
+            input.close()
+            exitCallback?.onExit(0)
+        }
+
         output.write(SHELL_STYLE)
+        output.slowAnimate = false
 
         val array = EByteArray()
         while (true) {
@@ -64,7 +75,12 @@ object EiaShell {
                     .replace(Regex("\\p{Cntrl}"), "")
                 array.reset()
                 output.write("$RED$BOLD".encodeToByteArray())
-                executor.loadMainSource(code)
+                try {
+                    executor.loadMainSource(code)
+                } catch (e: Exception) {
+                    // send the report back to user
+                    output.write("${e.message}\n".encodeToByteArray())
+                }
 
                 output.write(RESET.encodeToByteArray())
                 output.write(SHELL_STYLE)

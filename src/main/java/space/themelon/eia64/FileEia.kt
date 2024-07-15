@@ -1,6 +1,6 @@
 package space.themelon.eia64
 
-import space.themelon.eia64.io.AutoCloseSocket
+import space.themelon.eia64.io.AutoCloseExecutor
 import space.themelon.eia64.io.Safety
 import space.themelon.eia64.runtime.Executor
 import java.io.BufferedInputStream
@@ -19,7 +19,7 @@ object FileEia {
         while (true) {
             val client = server.accept()
             thread {
-                AutoCloseSocket(client)
+                //AutoCloseExecutor(client)
                 Safety.safeServe(client) { input, output -> serveClient(client, input, output)}
             }
         }

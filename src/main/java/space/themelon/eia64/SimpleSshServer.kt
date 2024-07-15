@@ -1,4 +1,5 @@
-import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory
+package space.themelon.eia64
+
 import org.apache.sshd.server.ExitCallback
 import org.apache.sshd.server.SshServer
 import org.apache.sshd.server.auth.UserAuthNoneFactory
