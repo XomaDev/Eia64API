@@ -13,6 +13,10 @@ import kotlin.concurrent.thread
 
 class EiaCommand(private val callback: (TerminalInput, TerminalOutput, ExitCallback?) -> Unit) : Command {
 
+    companion object {
+        private var activeConnectionsCount = 0
+    }
+
     private lateinit var input: InputStream
     private lateinit var output: OutputStream
     private lateinit var error: OutputStream
@@ -36,6 +40,10 @@ class EiaCommand(private val callback: (TerminalInput, TerminalOutput, ExitCallb
     }
 
     override fun start(channel: ChannelSession?, env: Environment?) {
+        val clientAddress = channel?.session?.clientAddress.toString()
+        println("New connection from $clientAddress")
+
+        activeConnectionsCount++
         thread {
             try {
                 callback(TerminalInput(input), TerminalOutput(output), exitCallback)
@@ -46,6 +54,9 @@ class EiaCommand(private val callback: (TerminalInput, TerminalOutput, ExitCallb
     }
 
     override fun destroy(channel: ChannelSession?) {
+        activeConnectionsCount--
+        if (activeConnectionsCount < 0)
+            activeConnectionsCount = 0
         closeStreams()
     }
 
@@ -54,4 +65,5 @@ class EiaCommand(private val callback: (TerminalInput, TerminalOutput, ExitCallb
         Safety.safeClose(output)
         Safety.safeClose(error)
     }
+
 }
