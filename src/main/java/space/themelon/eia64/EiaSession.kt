@@ -43,7 +43,8 @@ class EiaSession(
         else "Use Control-E to run the code"
         output.write("\t⭐\uFE0F$note\r\n\r\n".encodeToByteArray())
         output.write(SHELL_STYLE)
-        output.write("\r\n".encodeToByteArray())
+        if (!lineByLine)
+            output.write("\r\n".encodeToByteArray())
         output.slowAnimate = false
 
         // Provide access to standard I/O Stream
@@ -69,7 +70,9 @@ class EiaSession(
                     output.write("${e.message}\n".encodeToByteArray())
                 }
                 output.write(SHELL_STYLE)
-                output.write("\r\n".encodeToByteArray())
+                if (!lineByLine) {
+                    output.write("\r\n".encodeToByteArray())
+                }
             }
         }
 
