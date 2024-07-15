@@ -14,7 +14,7 @@ import kotlin.concurrent.thread
 class EiaCommand(private val callback: (TerminalInput, TerminalOutput, ExitCallback?) -> Unit) : Command {
 
     companion object {
-        private var activeConnectionsCount = 0
+        var activeConnectionsCount = 0
     }
 
     private lateinit var input: InputStream

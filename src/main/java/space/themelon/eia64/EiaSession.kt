@@ -33,7 +33,11 @@ class EiaSession(
             exitCallback?.onExit(0)
         }
 
-        output.write(EiaText.INTRO.encodeToByteArray())
+        output.write(
+            EiaText.INTRO
+                .replace("&", EiaCommand.activeConnectionsCount.toString())
+                .encodeToByteArray()
+        )
         val note = if (lineByLine)
             "Line-by-Line Interpretation mode"
         else "Use Control-E to run the code"

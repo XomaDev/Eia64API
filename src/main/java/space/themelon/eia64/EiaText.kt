@@ -46,7 +46,7 @@ object EiaText {
         "\t\t${BOLD}❄\uFE0FProject Eia!$RESET\n\n" +
                 "\t${YELLOW}${BOLD}Git ${CYAN}${BOLD} ${UNDERLINE}github.com/XomaDev/Eia64$RESET\n" +
                 "\t${RED}${BOLD}Docs ${CYAN}${UNDERLINE}themelon.space/eia$RESET\n\n" +
-                "\t\t${PURPLE_BG}5 Live Sessions$RESET\n\n" +
+                "\t\t${PURPLE_BG}& Live Sessions$RESET\n\n" +
                 "\t${CYAN_BG_BRIGHT}Crafted with love $RESET${BLUE_BG_BRIGHT} by Kumaraswamy B G$RESET\n" +
                 BLUE + BOLD +
                 """
