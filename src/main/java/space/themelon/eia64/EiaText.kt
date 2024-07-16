@@ -43,7 +43,7 @@ object EiaText {
 
 
     var INTRO =
-        "\t\t${BOLD}❄\uFE0FProject Eia!$RESET\n\n" +
+        "\t\t${BOLD}❄\uFE0F Project Eia!$RESET\n\n" +
                 "\t${YELLOW}${BOLD}Git ${CYAN}${BOLD} ${UNDERLINE}github.com/XomaDev/Eia64$RESET\n" +
                 "\t${RED}${BOLD}Docs ${CYAN}${UNDERLINE}themelon.space/eia$RESET\n\n" +
                 "\t\t${PURPLE_BG}& Live Sessions$RESET\n\n" +
@@ -62,7 +62,11 @@ object EiaText {
             \:\__\     \/__/       /:/  /
              \/__/                 \/__/
 
-             """ + "$RESET\n\n"
+             """ + "$RESET\n" +
+                "\t%1" + "\n" +
+                "\tCtrl-E: Run code" + "\n" +
+                "\tCtrl-L: Lex and print tokens" + "\n" +
+                "\tCtrl-P: Lex, parse and print nodes" + "\n"
 
     val SHELL_STYLE = "$RESET$BLUE_BG eia \$ $RESET $BLUE".toByteArray()
 }

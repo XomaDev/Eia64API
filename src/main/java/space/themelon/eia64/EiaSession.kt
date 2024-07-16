@@ -2,13 +2,17 @@ package space.themelon.eia64
 
 import org.apache.sshd.server.ExitCallback
 import space.themelon.eia64.EiaText.BOLD
+import space.themelon.eia64.EiaText.CYAN
 import space.themelon.eia64.EiaText.RED
 import space.themelon.eia64.EiaText.SHELL_STYLE
+import space.themelon.eia64.analysis.Parser
 import space.themelon.eia64.io.AutoCloseExecutor
 import space.themelon.eia64.io.TerminalInput
 import space.themelon.eia64.io.TerminalOutput
 import space.themelon.eia64.runtime.Executor
+import space.themelon.eia64.syntax.Lexer
 import java.io.PrintStream
+import java.util.StringJoiner
 
 class EiaSession(
     lineByLine: Boolean,
@@ -33,15 +37,17 @@ class EiaSession(
             exitCallback?.onExit(0)
         }
 
-        output.write(
-            EiaText.INTRO
-                .replace("&", EiaCommand.activeConnectionsCount.toString())
-                .encodeToByteArray()
-        )
         val note = if (lineByLine)
             "Line-by-Line Interpretation mode"
         else "Use Control-E to run the code"
-        output.write("\t⭐\uFE0F$note\r\n\r\n".encodeToByteArray())
+
+        output.write(
+            EiaText.INTRO
+                .replace("&", EiaCommand.activeConnectionsCount.toString())
+                .replace("%1", "\t⭐\uFE0F$note\r\n\r\n")
+                .encodeToByteArray()
+        )
+
         output.write(SHELL_STYLE)
         if (!lineByLine)
             output.write("\r\n".encodeToByteArray())
@@ -53,26 +59,70 @@ class EiaSession(
 
         val codeArray = EByteArray()
 
+        fun getFilteredCode(): String {
+            return String(codeArray.get())
+                // make sure to remove any control characters present
+                .replace(Regex("\\p{Cntrl}"), "")
+                .trim()
+        }
+
         fun execute() {
-            if (codeArray.isNotEmpty()) {
-                val filteredCode = String(codeArray.get())
-                    // make sure to remove any control characters present
-                    .replace(Regex("\\p{Cntrl}"), "")
-                    .trim()
-                if (filteredCode.isEmpty()) {
-                    return
-                }
-                codeArray.reset()
-                output.write(OUTPUT_STYLE)
-                try {
-                    executor.loadMainSource(filteredCode)
-                } catch (e: Exception) {
-                    output.write("${e.message}\n".encodeToByteArray())
-                }
-                output.write(SHELL_STYLE)
-                if (!lineByLine) {
-                    output.write("\r\n".encodeToByteArray())
-                }
+            val filteredCode = getFilteredCode()
+            if (filteredCode.isEmpty()) {
+                return
+            }
+            codeArray.reset()
+            output.write(OUTPUT_STYLE)
+            try {
+                executor.loadMainSource(filteredCode)
+            } catch (e: Exception) {
+                output.write("${e.message}\n".encodeToByteArray())
+            }
+            output.write(SHELL_STYLE)
+            if (!lineByLine) {
+                output.write("\r\n".encodeToByteArray())
+            }
+        }
+
+        fun lex() {
+            val filteredCode = getFilteredCode()
+            if (filteredCode.isEmpty()) {
+                return
+            }
+            codeArray.reset()
+            output.write(OUTPUT_STYLE)
+            output.write(10)
+            val lines = StringJoiner("\n")
+            Lexer(filteredCode).tokens.forEach { lines.add(it.toString()) }
+            output.write((lines.toString() + "\n").encodeToByteArray())
+
+            output.write(SHELL_STYLE)
+            if (!lineByLine) {
+                output.write("\r\n".encodeToByteArray())
+            }
+        }
+
+        fun parse() {
+            println(String(codeArray.get()))
+            val filteredCode = getFilteredCode()
+            if (filteredCode.isEmpty()) {
+                return
+            }
+            codeArray.reset()
+            output.write(OUTPUT_STYLE)
+            output.write(10)
+
+            val tokens = Lexer(filteredCode).tokens
+            val trees = Parser(Executor()).parse(tokens)
+
+            trees.expressions.forEach {
+                output.write(it.toString().encodeToByteArray())
+                output.write(10)
+            }
+
+            output.write(SHELL_STYLE)
+            if (!lineByLine) {
+                output.write("\r\n".encodeToByteArray())
             }
         }
 
@@ -82,6 +132,8 @@ class EiaSession(
                 exitCallback?.onExit(0)
                 break
             }
+
+            println(letterCode.toChar().code.toString() + " | " + letterCode.toChar())
 
             when (val char = letterCode.toChar()) {
                 '\u007F' -> {
@@ -104,6 +156,33 @@ class EiaSession(
                     execute()
                 }
 
+                '\u000C' -> {
+                    // Control + L
+                    // Request to lex the tokens and print them
+                    lex()
+                }
+
+                '\u0010' -> {
+                    // Control + P
+                    // To print the parsed nodes
+                    parse()
+                }
+
+                '\u001B' -> {
+                    // this is a control character (Escape), we simply discard it
+                    // to not cause problems
+                    input.read()
+                    input.read()
+                }
+
+                '\u000E' -> {
+                    // Control + N
+                    // Request for a new session
+
+                    // TODO
+                    // write Executor code to reset memory
+                }
+
                 else -> {
                     output.write(letterCode)
                     if (lineByLine && char == '\n') {
@@ -119,6 +198,6 @@ class EiaSession(
     companion object {
         private val MESSAGE_MAX_DURATION = "Maximum allowed duration of session was reached".encodeToByteArray()
         private val DELETE_CODE = "\b \b".encodeToByteArray()
-        private val OUTPUT_STYLE = "$RED$BOLD".encodeToByteArray()
+        private val OUTPUT_STYLE = "$CYAN$BOLD".encodeToByteArray()
     }
 }
