@@ -3,7 +3,6 @@ package space.themelon.eia64
 import org.apache.sshd.server.ExitCallback
 import space.themelon.eia64.EiaText.BOLD
 import space.themelon.eia64.EiaText.CYAN
-import space.themelon.eia64.EiaText.RED
 import space.themelon.eia64.EiaText.SHELL_STYLE
 import space.themelon.eia64.analysis.Parser
 import space.themelon.eia64.io.AutoCloseExecutor
@@ -12,7 +11,8 @@ import space.themelon.eia64.io.TerminalOutput
 import space.themelon.eia64.runtime.Executor
 import space.themelon.eia64.syntax.Lexer
 import java.io.PrintStream
-import java.util.StringJoiner
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 class EiaSession(
     lineByLine: Boolean,
@@ -30,15 +30,20 @@ class EiaSession(
     }
 
     private fun serve(input: TerminalInput, lineByLine: Boolean) {
-        val executor = Executor()
+        // we may change an Executor object, so we should use atomic reference
+        val executor = AtomicReference(Executor())
 
-        AutoCloseExecutor(executor) {
+        // for additional checks
+        val shutdown = AtomicBoolean(false)
+
+        AutoCloseExecutor {
             output.write(MESSAGE_MAX_DURATION)
+            executor.get().shutdownEvaluator()
+            shutdown.set(true)
             exitCallback?.onExit(0)
         }
 
-        val note = if (lineByLine)
-            "Line-by-Line Interpretation mode"
+        val note = if (lineByLine) "Line-by-Line Interpretation mode"
         else "Use Control-E to run the code"
 
         output.write(
@@ -48,14 +53,19 @@ class EiaSession(
                 .encodeToByteArray()
         )
 
-        output.write(SHELL_STYLE)
-        if (!lineByLine)
-            output.write("\r\n".encodeToByteArray())
+        fun writeShell() {
+            output.write(SHELL_STYLE)
+            if (!lineByLine)
+                output.write("\r\n".encodeToByteArray())
+        }
+        writeShell()
         output.slowAnimate = false
 
         // Provide access to standard I/O Stream
-        executor.standardInput = input.input // Provide direct access to the underlying stream
-        executor.standardOutput = PrintStream(output)
+        executor.get().apply {
+            standardInput = input.input // Provide direct access to the underlying stream
+            standardOutput = PrintStream(output)
+        }
 
         val codeArray = EByteArray()
 
@@ -74,14 +84,11 @@ class EiaSession(
             codeArray.reset()
             output.write(OUTPUT_STYLE)
             try {
-                executor.loadMainSource(filteredCode)
+                executor.get().loadMainSource(filteredCode)
             } catch (e: Exception) {
                 output.write("${e.message}\n".encodeToByteArray())
             }
-            output.write(SHELL_STYLE)
-            if (!lineByLine) {
-                output.write("\r\n".encodeToByteArray())
-            }
+            writeShell()
         }
 
         fun lex() {
@@ -92,14 +99,17 @@ class EiaSession(
             codeArray.reset()
             output.write(OUTPUT_STYLE)
             output.write(10)
-            val lines = StringJoiner("\n")
-            Lexer(filteredCode).tokens.forEach { lines.add(it.toString()) }
-            output.write((lines.toString() + "\n").encodeToByteArray())
 
-            output.write(SHELL_STYLE)
-            if (!lineByLine) {
-                output.write("\r\n".encodeToByteArray())
+            try {
+                Lexer(filteredCode).tokens.forEach {
+                    output.write(it.toString().encodeToByteArray())
+                    output.write(10)
+                }
+            } catch (e: Exception) {
+                output.write("${e.message}\n".encodeToByteArray())
             }
+
+            writeShell()
         }
 
         fun parse() {
@@ -112,28 +122,29 @@ class EiaSession(
             output.write(OUTPUT_STYLE)
             output.write(10)
 
-            val tokens = Lexer(filteredCode).tokens
-            val trees = Parser(Executor()).parse(tokens)
+            try {
+                val tokens = Lexer(filteredCode).tokens
+                val trees = Parser(Executor()).parse(tokens)
 
-            trees.expressions.forEach {
-                output.write(it.toString().encodeToByteArray())
-                output.write(10)
+                trees.expressions.forEach {
+                    output.write(it.toString().encodeToByteArray())
+                    output.write(10)
+                }
+            } catch (e: Exception) {
+                output.write("${e.message}\n".encodeToByteArray())
             }
 
-            output.write(SHELL_STYLE)
-            if (!lineByLine) {
-                output.write("\r\n".encodeToByteArray())
-            }
+            writeShell()
         }
 
-        while (true) {
+        while (!shutdown.get()) {
             val letterCode = input.read()
             if (letterCode == -1) {
                 exitCallback?.onExit(0)
                 break
             }
 
-            println(letterCode.toChar().code.toString() + " | " + letterCode.toChar())
+            //debug println(letterCode.toChar().code.toString() + " | " + letterCode.toChar())
 
             when (val char = letterCode.toChar()) {
                 '\u007F' -> {
@@ -179,8 +190,21 @@ class EiaSession(
                     // Control + N
                     // Request for a new session
 
-                    // TODO
-                    // write Executor code to reset memory
+                    // calling executor.clearMemory() may work in certain cases,
+                    // but it causes problems when there are external classes imported, it could
+                    // possibly go wrong, so create a new instance
+                    executor.get().shutdownEvaluator()
+                    executor.set(Executor())
+
+                    output.write(OUTPUT_STYLE)
+                    output.write(10)
+                    output.write(MESSAGE_MEM_CLEARED)
+
+                    output.write(SHELL_STYLE)
+
+                    if (!lineByLine) {
+                        output.write("\r\n".encodeToByteArray())
+                    }
                 }
 
                 else -> {
@@ -197,6 +221,8 @@ class EiaSession(
 
     companion object {
         private val MESSAGE_MAX_DURATION = "Maximum allowed duration of session was reached".encodeToByteArray()
+        private val MESSAGE_MEM_CLEARED = "Memory was cleared\n".encodeToByteArray()
+
         private val DELETE_CODE = "\b \b".encodeToByteArray()
         private val OUTPUT_STYLE = "$CYAN$BOLD".encodeToByteArray()
     }

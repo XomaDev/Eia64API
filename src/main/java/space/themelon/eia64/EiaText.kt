@@ -66,7 +66,9 @@ object EiaText {
                 "\t%1" + "\n" +
                 "\tCtrl-E: Run code" + "\n" +
                 "\tCtrl-L: Lex and print tokens" + "\n" +
-                "\tCtrl-P: Lex, parse and print nodes" + "\n"
+                "\tCtrl-P: Lex, then parse and print nodes" + "\n" +
+                "\tCtrl-N: Clear memory" + "\n" +
+                "\tCtrl-C: Exit" + "\n"
 
     val SHELL_STYLE = "$RESET$BLUE_BG eia \$ $RESET $BLUE".toByteArray()
 }

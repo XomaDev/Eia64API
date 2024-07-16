@@ -10,7 +10,6 @@ import java.io.IOException
 import java.net.Socket
 
 class AutoCloseExecutor(
-    executor: Executor,
     exitCallback: () -> Unit,
 ) {
 
@@ -25,7 +24,6 @@ class AutoCloseExecutor(
     init {
         scope.launch {
             delay(MAX_EXECUTION_TIME.toLong())
-            executor.shutdownEvaluator()
             exitCallback()
         }
     }
