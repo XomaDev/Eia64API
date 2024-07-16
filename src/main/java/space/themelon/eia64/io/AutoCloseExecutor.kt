@@ -16,7 +16,7 @@ class AutoCloseExecutor(
     companion object {
         // The Maximum session time of Executor cannot exceed 5 minutes.
         // Not enforcing so could affect resources and increase the load
-        const val MAX_EXECUTION_TIME = 5 * 50 * 1000
+        const val MAX_EXECUTION_TIME = 5 * 60 * 1000
     }
 
     private val scope = CoroutineScope(Dispatchers.Default)

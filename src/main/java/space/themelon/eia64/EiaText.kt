@@ -43,18 +43,13 @@ object EiaText {
 
 
     var INTRO =
-        "\t\t${BOLD}❄\uFE0F Project Eia!$RESET\n\n" +
-                "\t${YELLOW}${BOLD}Git ${CYAN}${BOLD} ${UNDERLINE}github.com/XomaDev/Eia64$RESET\n" +
-                "\t${RED}${BOLD}Docs ${CYAN}${UNDERLINE}themelon.space/eia$RESET\n\n" +
-                "\t\t${PURPLE_BG}& Live Sessions$RESET\n\n" +
-                "\t${CYAN_BG_BRIGHT}Crafted with love $RESET${BLUE_BG_BRIGHT} by Kumaraswamy B G$RESET\n" +
                 BLUE + BOLD +
                 """
               ___                   ___
              /\  \        ___      /\  \
-            /::\  \      /\  \    /::\  \
-           /:/\:\  \     \:\  \  /:/\:\  \
-          /::\~\:\  \    /::\__\/::\~\:\  \
+            /::\e \      /\  \    /::\  \
+           /:/\:\i \     \:\  \  /:/\:\  \
+          /::\~\:\a \    /::\__\/::\~\:\  \
          /:/\:\ \:\__\__/:/\/__/:/\:\ \:\__\
          \:\~\:\ \/__/\/:/  /  \/__\:\/:/  /
           \:\ \:\__\ \::/__/        \::/  /
@@ -62,13 +57,23 @@ object EiaText {
             \:\__\     \/__/       /:/  /
              \/__/                 \/__/
 
-             """ + "$RESET\n" +
-                "\t%1" + "\n" +
-                "\tCtrl-E: Run code" + "\n" +
-                "\tCtrl-L: Lex and print tokens" + "\n" +
-                "\tCtrl-P: Lex, then parse and print nodes" + "\n" +
-                "\tCtrl-N: Clear memory" + "\n" +
-                "\tCtrl-C: Exit" + "\n"
+             """ + "$RESET\n"
 
-    val SHELL_STYLE = "$RESET$BLUE_BG eia \$ $RESET $BLUE".toByteArray()
+    // only logo
+    var EIA = YELLOW + """
+              ___                   ___
+             /\  \        ___      /\  \
+            /::\  \      /\  \    /::\  \
+           /:/\:\  \     \:\  \  /:/\:\  \
+          /::\~\:\  \    /::\__\/::\~\:\  \
+         /:/\:\ \:\__\__/:/\/__/:/\:\ \:\__\
+         \:\~\:\ \/__/\/:/  /  \/__\:\/:/  /
+          \:\ \:\__\ \::/__/        \::/A /
+           \:\ \/__/  \:\__\        /:/I /
+            \:\__\     \/__/       /:/E /
+             \/__/                 \/__/
+
+    """.trimIndent() + "\n"
+
+    val SHELL_STYLE = "$RESET$BLUE_BG eia \$ $RESET ".toByteArray()
 }

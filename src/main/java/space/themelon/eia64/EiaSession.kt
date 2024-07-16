@@ -20,12 +20,21 @@ class EiaSession(
     private val output: TerminalOutput,
     private val exitCallback: ExitCallback?
 ) {
+
     init {
         try {
             serve(input, lineByLine)
         } catch (t: Throwable) {
             // We cannot affect the main thread at any cost
             t.printStackTrace()
+        }
+    }
+
+    private fun safeRun(output: TerminalOutput, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Exception) {
+            output.write("${e.message.toString()}\n".encodeToByteArray())
         }
     }
 
@@ -59,7 +68,7 @@ class EiaSession(
                 output.write("\r\n".encodeToByteArray())
         }
         writeShell()
-        output.slowAnimate = false
+        //output.slowAnimate = false
 
         // Provide access to standard I/O Stream
         executor.get().apply {
@@ -83,10 +92,8 @@ class EiaSession(
             }
             codeArray.reset()
             output.write(OUTPUT_STYLE)
-            try {
+            safeRun(output) {
                 executor.get().loadMainSource(filteredCode)
-            } catch (e: Exception) {
-                output.write("${e.message}\n".encodeToByteArray())
             }
             writeShell()
         }
@@ -100,13 +107,11 @@ class EiaSession(
             output.write(OUTPUT_STYLE)
             output.write(10)
 
-            try {
+            safeRun(output) {
                 Lexer(filteredCode).tokens.forEach {
                     output.write(it.toString().encodeToByteArray())
                     output.write(10)
                 }
-            } catch (e: Exception) {
-                output.write("${e.message}\n".encodeToByteArray())
             }
 
             writeShell()
@@ -122,7 +127,7 @@ class EiaSession(
             output.write(OUTPUT_STYLE)
             output.write(10)
 
-            try {
+            safeRun(output) {
                 val tokens = Lexer(filteredCode).tokens
                 val trees = Parser(Executor()).parse(tokens)
 
@@ -130,8 +135,6 @@ class EiaSession(
                     output.write(it.toString().encodeToByteArray())
                     output.write(10)
                 }
-            } catch (e: Exception) {
-                output.write("${e.message}\n".encodeToByteArray())
             }
 
             writeShell()
@@ -187,24 +190,22 @@ class EiaSession(
                 }
 
                 '\u000E' -> {
-                    // Control + N
-                    // Request for a new session
+                    // Ctrl + N
+                    // Clears the memory, a fresh session
 
-                    // calling executor.clearMemory() may work in certain cases,
-                    // but it causes problems when there are external classes imported, it could
-                    // possibly go wrong, so create a new instance
+                    // Note: We should not cal clearMemory() on executor
+                    // rather create a new instance
                     executor.get().shutdownEvaluator()
-                    executor.set(Executor())
+                    executor.set(Executor().apply {
+                        standardInput = input.input // Provide direct access to the underlying stream
+                        standardOutput = PrintStream(output)
+                    })
 
                     output.write(OUTPUT_STYLE)
                     output.write(10)
                     output.write(MESSAGE_MEM_CLEARED)
 
-                    output.write(SHELL_STYLE)
-
-                    if (!lineByLine) {
-                        output.write("\r\n".encodeToByteArray())
-                    }
+                    writeShell()
                 }
 
                 else -> {
