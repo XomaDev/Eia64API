@@ -1,19 +1,15 @@
 package space.themelon.eia64
 
-class EByteArray {
+class CodeArray {
 
     private var array = ByteArray(50)
     private var size = 50
     private var index = 0
 
-    fun get(): ByteArray {
-        return array.copyOfRange(0, index)
-    }
+    fun get() = array.copyOfRange(0, index)
 
     fun put(byte: Byte) {
-        if (index == size) {
-            resize()
-        }
+        if (index == size) resize()
         array[index++] = byte
     }
 
@@ -21,7 +17,7 @@ class EByteArray {
         if (index != 0) index--
     }
 
-    fun isNotEmpty() = index != 0
+    //fun isNotEmpty() = index != 0
 
     private fun resize() {
         val newCap = size * 2
@@ -33,7 +29,7 @@ class EByteArray {
         array = allocation
     }
 
-    fun reset() {
-        index = 0
-    }
+    //fun reset() {
+        //index = 0
+    //}
 }

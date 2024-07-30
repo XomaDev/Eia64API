@@ -1,21 +1,24 @@
 package space.themelon.eia64
 
 import org.apache.sshd.server.ExitCallback
-import space.themelon.eia64.EiaText.BOLD
-import space.themelon.eia64.EiaText.CYAN
-import space.themelon.eia64.EiaText.SHELL_STYLE
-import space.themelon.eia64.analysis.Parser
+import space.themelon.eia64.EiaLive.Companion
+import space.themelon.eia64.TerminalColors.BLUE
+import space.themelon.eia64.TerminalColors.BOLD
+import space.themelon.eia64.TerminalColors.RED
+import space.themelon.eia64.TerminalColors.RESET
+import space.themelon.eia64.TerminalColors.YELLOW
+import space.themelon.eia64.analysis.ParserX
 import space.themelon.eia64.io.AutoCloseExecutor
 import space.themelon.eia64.io.TerminalInput
 import space.themelon.eia64.io.TerminalOutput
 import space.themelon.eia64.runtime.Executor
 import space.themelon.eia64.syntax.Lexer
 import java.io.PrintStream
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 class EiaSession(
-    lineByLine: Boolean,
     input: TerminalInput,
     private val output: TerminalOutput,
     private val exitCallback: ExitCallback?
@@ -23,14 +26,14 @@ class EiaSession(
 
     init {
         try {
-            serve(input, lineByLine)
+            serve(input)
         } catch (t: Throwable) {
             // We cannot affect the main thread at any cost
             t.printStackTrace()
         }
     }
 
-    private fun safeRun(output: TerminalOutput, block: () -> Unit) {
+    private fun runSafely(output: TerminalOutput, block: () -> Unit) {
         try {
             block()
         } catch (e: Exception) {
@@ -38,7 +41,7 @@ class EiaSession(
         }
     }
 
-    private fun serve(input: TerminalInput, lineByLine: Boolean) {
+    private fun serve(input: TerminalInput) {
         // we may change an Executor object, so we should use atomic reference
         val executor = AtomicReference(Executor())
 
@@ -52,21 +55,12 @@ class EiaSession(
             exitCallback?.onExit(0)
         }
 
-        val note = if (lineByLine) "Line-by-Line Interpretation mode"
-        else "Use Control-E to run the code"
-
-        output.write(
-            EiaText.INTRO
-                .replace("&", EiaCommand.activeConnectionsCount.toString())
-                .replace("%1", "\t⭐\uFE0F$note\r\n\r\n")
-                .encodeToByteArray()
-        )
-
         fun writeShell() {
             output.write(SHELL_STYLE)
-            if (!lineByLine)
-                output.write("\r\n".encodeToByteArray())
+            //if (!lineByLine)
+                //output.write("\r\n".encodeToByteArray())
         }
+        output.write(INTRO)
         writeShell()
         //output.slowAnimate = false
 
@@ -76,155 +70,192 @@ class EiaSession(
             standardOutput = PrintStream(output)
         }
 
-        val codeArray = EByteArray()
+//        val codeArray = CodeArray()
 
-        fun getFilteredCode(): String {
-            return String(codeArray.get())
-                // make sure to remove any control characters present
-                .replace(Regex("\\p{Cntrl}"), "")
-                .trim()
-        }
-
-        fun execute() {
-            val filteredCode = getFilteredCode()
-            if (filteredCode.isEmpty()) {
-                return
-            }
-            codeArray.reset()
-            output.write(OUTPUT_STYLE)
-            safeRun(output) {
-                executor.get().loadMainSource(filteredCode)
-            }
-            writeShell()
-        }
-
-        fun lex() {
-            val filteredCode = getFilteredCode()
-            if (filteredCode.isEmpty()) {
-                return
-            }
-            codeArray.reset()
-            output.write(OUTPUT_STYLE)
-            output.write(10)
-
-            safeRun(output) {
-                Lexer(filteredCode).tokens.forEach {
-                    output.write(it.toString().encodeToByteArray())
-                    output.write(10)
+        val helper = CompletionHelper(
+            ready = { tokens ->
+                output.write(OUTPUT_STYLE)
+                runSafely(output) {
+                    executor.get().loadMainTokens(tokens)
                 }
+                output.write(SHELL_STYLE)
+            },
+            syntaxError = { error ->
+                output.write(ERROR_OUTPUT_STYLE)
+                output.write("$error\n".encodeToByteArray())
+                output.write(SHELL_STYLE)
             }
+        )
 
-            writeShell()
+//        fun getCodeString(): String? {
+//            val code = String(codeArray.get())
+//                // make sure to remove any control characters present
+//                .replace(Regex("\\p{Cntrl}"), "")
+//                .trim()
+//            if (code.isEmpty()) return null
+//            return code
+//        }
+
+//        fun execute() {
+//            val filteredCode = getCodeString() ?: return
+//            helper.addLine()
+//            codeArray.reset()
+//            output.write(OUTPUT_STYLE)
+//            runSafely(output) {
+//                executor.get().loadMainSource(filteredCode)
+//            }
+//            writeShell()
+//        }
+
+//        fun lex() {
+//            val filteredCode = getCodeString() ?: return
+//            codeArray.reset()
+//            output.write(OUTPUT_STYLE)
+//            output.write(10)
+//
+//            runSafely(output) {
+//                Lexer(filteredCode).tokens.forEach {
+//                    output.write(it.toString().encodeToByteArray())
+//                    output.write(10)
+//                }
+//            }
+//
+//            writeShell()
+//        }
+
+//        fun parse() {
+//            val filteredCode = getCodeString() ?: return
+//            codeArray.reset()
+//            output.write(OUTPUT_STYLE)
+//            output.write(10)
+//
+//            runSafely(output) {
+//                val tokens = Lexer(filteredCode).tokens
+//                val trees = ParserX(Executor()).parse(tokens)
+//
+//                trees.expressions.forEach {
+//                    output.write(it.toString().encodeToByteArray())
+//                    output.write(10)
+//                }
+//            }
+//
+//            writeShell()
+//        }
+
+//        while (!shutdown.get()) {
+//            val letterCode = input.read()
+//            if (letterCode == -1) {
+//                exitCallback?.onExit(0)
+//                break
+//            }
+//
+//            when (val char = letterCode.toChar()) {
+//                '\u007F' -> {
+//                    // Delete Character
+//                    if (codeArray.isNotEmpty()) {
+//                        output.write(DELETE_CODE)
+//                        codeArray.delete()
+//                    }
+//                }
+//
+//                '\u0003' -> {
+//                    // Control + C Character
+//                    // Signal to end the session
+//                    exitCallback?.onExit(0)
+//                    break
+//                }
+//
+//                '\u000C' -> {
+//                    // Control + L
+//                    // Request to lex the tokens and print them
+//                    lex()
+//                }
+//
+//                '\u0010' -> {
+//                    // Control + P
+//                    // To print the parsed nodes
+//                    parse()
+//                }
+//
+//                '\u001B' -> {
+//                    // this is a control character (Escape), we simply discard it
+//                    // to not cause problems
+//                    input.read()
+//                    input.read()
+//                }
+//
+//                else -> {
+//                    output.write(letterCode)
+//                    if (char == '\n') {
+//                        execute()
+//                        continue
+//                    }
+//                    codeArray.put(letterCode.toByte())
+//                }
+//            }
+//        }
+
+        fun useLine(line: String) {
+            if (line == "debug") {
+                // toggles the debug mode
+                Executor.DEBUG = !Executor.DEBUG
+                output.write(SHELL_STYLE)
+            } else if (!helper.addLine(line)) {
+                // There's some more code that needs to be typed in
+                output.write(PENDING_SHELL_STYLE)
+            }
         }
 
-        fun parse() {
-            println(String(codeArray.get()))
-            val filteredCode = getFilteredCode()
-            if (filteredCode.isEmpty()) {
-                return
-            }
-            codeArray.reset()
-            output.write(OUTPUT_STYLE)
-            output.write(10)
+        val lineBuffer = StringBuilder()
+        while (true) {
+            val read = input.read()
+            output.write(read) // we have to echo back the input
 
-            safeRun(output) {
-                val tokens = Lexer(filteredCode).tokens
-                val trees = Parser(Executor()).parse(tokens)
-
-                trees.expressions.forEach {
-                    output.write(it.toString().encodeToByteArray())
-                    output.write(10)
+            when (val char = read.toChar()) {
+                '\n' -> {
+                    val buffer = lineBuffer.toString()
+                    useLine(buffer)
+                    lineBuffer.clear()
                 }
-            }
-
-            writeShell()
-        }
-
-        while (!shutdown.get()) {
-            val letterCode = input.read()
-            if (letterCode == -1) {
-                exitCallback?.onExit(0)
-                break
-            }
-
-            //debug println(letterCode.toChar().code.toString() + " | " + letterCode.toChar())
-
-            when (val char = letterCode.toChar()) {
-                '\u007F' -> {
-                    // Delete Character
-                    if (codeArray.isNotEmpty()) {
-                        output.write(DELETE_CODE)
-                        codeArray.delete()
-                    }
-                }
-
                 '\u0003' -> {
                     // Control + C Character
                     // Signal to end the session
                     exitCallback?.onExit(0)
                     break
                 }
-
-                '\u0005' -> {
-                    // Control + E Character
-                    execute()
+                '\u007F' -> {
+                    // Delete Character
+                    if (lineBuffer.isNotEmpty()) {
+                        lineBuffer.setLength(lineBuffer.length - 1)
+                        output.write(DELETE_CODE)
+                    }
                 }
-
-                '\u000C' -> {
-                    // Control + L
-                    // Request to lex the tokens and print them
-                    lex()
-                }
-
-                '\u0010' -> {
-                    // Control + P
-                    // To print the parsed nodes
-                    parse()
-                }
-
                 '\u001B' -> {
                     // this is a control character (Escape), we simply discard it
                     // to not cause problems
                     input.read()
                     input.read()
                 }
-
-                '\u000E' -> {
-                    // Ctrl + N
-                    // Clears the memory, a fresh session
-
-                    // Note: We should not cal clearMemory() on executor
-                    // rather create a new instance
-                    executor.get().shutdownEvaluator()
-                    executor.set(Executor().apply {
-                        standardInput = input.input // Provide direct access to the underlying stream
-                        standardOutput = PrintStream(output)
-                    })
-
-                    output.write(OUTPUT_STYLE)
-                    output.write(10)
-                    output.write(MESSAGE_MEM_CLEARED)
-
-                    writeShell()
-                }
-
-                else -> {
-                    output.write(letterCode)
-                    if (lineByLine && char == '\n') {
-                        execute()
-                        continue
-                    }
-                    codeArray.put(letterCode.toByte())
-                }
+                else -> lineBuffer.append(char)
             }
         }
     }
 
     companion object {
+        private val INTRO = """
+            Eia64 Dev 2.1
+            Type "debug" to toggle debug mode
+            
+            
+        """.trimIndent().encodeToByteArray()
         private val MESSAGE_MAX_DURATION = "Maximum allowed duration of session was reached".encodeToByteArray()
-        private val MESSAGE_MEM_CLEARED = "Memory was cleared\n".encodeToByteArray()
 
         private val DELETE_CODE = "\b \b".encodeToByteArray()
-        private val OUTPUT_STYLE = "$CYAN$BOLD".encodeToByteArray()
+
+        private val SHELL_STYLE = "${YELLOW}eia>$RESET ".toByteArray()
+        private val PENDING_SHELL_STYLE = ".... ".toByteArray()
+
+        private val OUTPUT_STYLE = "$BLUE$BOLD".encodeToByteArray()
+        private val ERROR_OUTPUT_STYLE = "$RED$BOLD".encodeToByteArray()
     }
 }
