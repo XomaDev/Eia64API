@@ -1,9 +1,9 @@
-import space.themelon.eia64.EByteArray
+import space.themelon.eia64.CodeArray
 
 object EByteArrayTesting {
     @JvmStatic
     fun main(args: Array<String>) {
-        val array = EByteArray()
+        val array = CodeArray()
         array.put(1)
         array.put(2)
         array.put(3)

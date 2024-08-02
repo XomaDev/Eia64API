@@ -1,12 +1,9 @@
-# Eia playground
+# Eia SSH Playground
 
-Project to demonstrate [Eia64](https://github.com/XomaDev/Eia64) without having to download or install.
+Extension of [Project Eia64](https://github.com/XomaDev/Eia64) ✨ that aims to offer a new way to try out Eia.
 
-Just do `ssh -p 2244 hackclub.app` 👀
+```bash
+ssh -p 2121 hackclub.app
+```
 
-![promo.png](images/promo.png)
-
-Alternatively you can also do `ssh -p 2103 hackclub.app` to use buffer mode rather than line-by-line interpretation.
-
-Crafted with Love ❤\
-Kumaraswamy B G • 16-year-old
+If you are running it the first time, enter `Yes`.

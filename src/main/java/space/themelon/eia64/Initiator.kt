@@ -11,13 +11,12 @@ object Initiator {
         Executor.STD_LIB = File(userDirectory, "eialib/stdlib/").absolutePath
 
         thread {
-            EiaShell.main()
-        }
-        thread {
             EiaPlayground.main()
         }
-        thread {
-            FileEia.main()
+
+        // So that the SSH servers stay active!
+        while (true) {
+            Thread.sleep(Long.MAX_VALUE)
         }
     }
 }

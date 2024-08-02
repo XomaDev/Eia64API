@@ -27,7 +27,7 @@ tasks.test {
 
 kotlin {
     // better to keep it below 22
-    jvmToolchain(17)
+    jvmToolchain(11)
 }
 
 tasks.register<Jar>("fatJar") {

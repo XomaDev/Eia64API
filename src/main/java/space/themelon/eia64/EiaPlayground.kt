@@ -10,12 +10,12 @@ object EiaPlayground {
 
     fun main() {
         SshServer.setUpDefaultServer().apply {
-            port = 2103
+            port = 2121
             keyPairProvider = SimpleGeneratorHostKeyProvider(Paths.get("eiaplayground.ser"))
             userAuthFactories = listOf(UserAuthNoneFactory.INSTANCE)
             shellFactory = ShellFactory {
                 EiaCommand { input, output, exitCallback ->
-                    EiaSession(false, input, output, exitCallback)
+                    EiaSession(input, output, exitCallback)
                 }
             }
             start()

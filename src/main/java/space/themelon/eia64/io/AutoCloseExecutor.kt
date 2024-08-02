@@ -10,14 +10,13 @@ import java.io.IOException
 import java.net.Socket
 
 class AutoCloseExecutor(
-    executor: Executor,
     exitCallback: () -> Unit,
 ) {
 
     companion object {
-        // The Maximum session time of Executor cannot exceed 5 minutes.
+        // The Maximum session time of Executor cannot exceed 7 minutes.
         // Not enforcing so could affect resources and increase the load
-        const val MAX_EXECUTION_TIME = 5 * 50 * 1000
+        const val MAX_EXECUTION_TIME = 7 * 60 * 1000
     }
 
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -25,7 +24,6 @@ class AutoCloseExecutor(
     init {
         scope.launch {
             delay(MAX_EXECUTION_TIME.toLong())
-            executor.shutdownEvaluator()
             exitCallback()
         }
     }
