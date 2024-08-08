@@ -2,12 +2,12 @@ include(
   static:std:string
 )
 
-var list = arrayOf<Any>(0, 0)
+var list = makeArray<Any>(0, 0)
 var size = 0
 var index = 0
 
 visible fn init(initSize: Int) {
-  list = arrayOf<Any>(initSize, 0)
+  list = makeArray<Any>(initSize, 0)
   size = initSize
   index = 0
 }
@@ -20,8 +20,8 @@ fn initArray(array: Array) {
 
 fn enlarge() {
   let newSize = size * 2
-  let newList = arrayOf<Any>(newSize, 0)
-  for (var i = 0, i < index, i++) {
+  let newList = makeArray<Any>(newSize, 0)
+  for (var i = 0; i < index; i++) {
     newList[i] = list[i]
   }
   list = newList
@@ -54,9 +54,9 @@ visible fn add(element: Any) {
 
 visible fn addAt(element: Any, at: Int) {
   checkBounds(at)
-  let newList = arrayOf<Any>(size + 1, 0)
+  let newList = makeArray<Any>(size + 1, 0)
   var j = 0
-  for (var i = 0, i < size, i++) {
+  for (var i = 0; i < size; i++) {
     if (i == at) {
       newList[j++] = element
     }
@@ -68,7 +68,7 @@ visible fn addAt(element: Any, at: Int) {
 }
 
 visible fn indexOf(match: Any): Int {
-  for (var i = 0, i < index, i++) {
+  for (var i = 0; i < index; i++) {
     if (list[i] == match) return i
   }
   return -1
@@ -79,7 +79,7 @@ visible fn contains(match: Any): Bool = indexOf(match) != -1
 visible fn remove(at: Int): Any {
   checkBounds(at)
   let element = list[at]
-  for (var i = copy(at), i < index - 1, i++) {
+  for (var i = copy(at); i < index - 1; i++) {
     list[i] = list[i + 1]
   }
   index--
@@ -101,9 +101,9 @@ visible fn arrayOfRange(from: Int, end: Int): Array {
   checkBounds(end - 1)
 
   let sublistSize = end - from
-  let subarray = arrayOf<Any>(sublistSize, 0)
+  let subarray = makeArray<Any>(sublistSize, 0)
 
-  for (var i = 0, i < sublistSize, i++) {
+  for (var i = 0; i < sublistSize; i++) {
     subarray[i] = list[from + i]
   }
   return subarray
@@ -114,7 +114,7 @@ visible fn toArray(): Array = arrayOfRange(0, index)
 visible fn string(): String {
   if (size == 0) return "[]"
   var result = "["
-  for (var i = 0, i < index, i++) {
+  for (var i = 0; i < index; i++) {
     result += str(list[i]) + ", "
   }
   result = result.part(0, result.size() - 2)
